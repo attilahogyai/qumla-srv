@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+
+<mapper namespace="eu.dorsum.webtrader.services.mailbox.impl.MailboxMapper">
+	
+	<cache
+	  eviction="LRU"
+	  flushInterval="60000"
+	  size="512"
+	  readOnly="true"/>	
+	 
+	<insert id="createGroupMailboxMessage" useGeneratedKeys="true" keyProperty="id" keyColumn="id"> 
+		insert into mailbox_message(reply_of,subject,body,recipient_group,client_code_start,client_code_end,filters,deleted,create_dt,create_uid)
+	    values(#{replyOfId},#{subject},#{body},#{recipientGroup},#{clientCodeStart},#{clientCodeEnd},#{filters},false,SYSDATE,#{user})
+	</insert> 
+	   
+	
+
+</mapper>

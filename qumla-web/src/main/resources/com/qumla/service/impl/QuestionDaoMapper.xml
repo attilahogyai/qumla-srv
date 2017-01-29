@@ -1,0 +1,388 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.qumla.service.impl.QuestionDaoMapper">
+
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true" />
+
+
+	<resultMap id="QuestionResult" type="Question" autoMapping="true">
+		<id property="id" column="qid" />
+		<result property="color" column="color"/>
+		<result property="sessionCode" column="session"/>
+		
+		<result property="tags" column="tags" typeHandler="TextArrayTypeHandler" />
+		<association property="targetLocation" javaType="LocationData">
+			<id property="id" column="target_location" />
+			<result property="cityName" column="location_name" />
+		</association>
+		<collection property="options" ofType="Option" notNullColumn="opid">
+			<id property="id" column="opid"/>
+			<result property="text" column="optext"/>
+			<result property="style" column="opstyle"/>
+			<result property="ord" column="oporder"/>
+			<association property="question" javaType="Question">
+				<id property="id" column="qid" />
+			</association>		
+		</collection>
+	</resultMap>
+	
+	<resultMap id="SearchResultMap" type="SearchResult" autoMapping="true">
+		<id property="id" column="id" />
+		<result property="type" column="type"/>
+		<result property="title" column="title"/>
+	</resultMap>
+	
+	
+	<resultMap id="QuestionResultSession" type="Question" autoMapping="true">
+		<id property="id" column="qid" />
+		<result property="sessionCode" column="session"/>
+	</resultMap>	
+	<resultMap id="getOptionResult" type="Option" autoMapping="true">
+		<association property="question" javaType="Question">
+			<id property="id" column="question" />
+		</association>
+	</resultMap>
+
+	<sql id="questionFields">
+		q.id as qid,q.*, location_data.name as location_name, country.country_name,
+		option.id as opid,
+		option.text as optext,
+		option.style as opstyle,
+		option.ord as oporder,
+		answer.id is not null as answered,
+		q.session as session
+	</sql>
+	<sql id="questionFieldsForOne">
+		q.id as qid,q.*, location_data.name as location_name, country.country_name,
+		option.id as opid,
+		option.text as optext,
+		option.style as opstyle,
+		option.ord as oporder,
+		answer.id is not null as answered,
+		q.session as session,
+		subscription.id is not null as subscribed
+	</sql>
+	
+
+	<sql id="activeQuestion">
+	q.status in (100, 50) and q.validation!=50 and ticket is null
+	and (<include refid="internationalFilter"/>)
+	</sql>
+	<sql id="internationalFilter">
+		<if test="international">
+		q.language='english' or q.country=#{countryCode} or q.target_country=#{countryCode} 
+		</if>
+		<if test="!international">
+		q.country=#{countryCode} or q.target_country=#{countryCode} 
+		</if>	
+		<if test="filterLanguage">
+		or language=#{filterLanguage}
+		</if>			
+	</sql>	
+	<sql id="activeQuestionSql">
+		SELECT 
+		<include refid="questionFields"/>
+		FROM (select * from question q where <include refid="activeQuestion"/> order by COALESCE(q.last_answered, date '2015-01-01') desc,q.id desc offset #{offset} limit #{limit} ) q 
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}
+	</sql>	
+	
+
+	
+	
+	
+	<!-- ////// FIND ONE QUESTION AND OPTION  -->
+	
+	<select id="findOneQuestionForSession" resultMap="QuestionResultSession" parameterType="QuestionFilter">
+	    select * from question q where q.id=#{id} and q.session=#{session} and q.status in (100, 50)
+	</select>
+	<select id="findOneQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter" flushCache="true">
+		SELECT 
+		<include refid="questionFieldsForOne"/>
+		FROM question q
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}
+		left join subscription on q.id=subscription.question  and subscription.session=#{session}
+		where q.status in (100, 50)
+		and q.id=#{id}
+		order by option.ord
+	</select>	
+	<select id="findOneOption" resultType="Option" resultMap="getOptionResult">
+		select * from option where id=#{id}
+	</select>
+	
+	<!-- ////// END FIND ONE QUESTION  -->
+	
+	
+	
+	
+	<!--/////////  START ANSWERED -->
+	
+	<select id="findAsweredQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+		SELECT 
+		q.id as qid,q.*, location_data.name as location_name, country.country_name,
+		option.id as opid,
+		option.text as optext,
+		option.style as opstyle,
+		option.ord as oporder,
+		true as answered
+		FROM (select q.* from answer a, question q where a.question=q.id and <include refid="activeQuestion"/> and a.session=#{session}  order by a.id desc offset #{offset} limit #{limit}) as q
+		left join option on q.id=option.question
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+	</select>
+	<select id="findAsweredQuestionCount" resultType="long" parameterType="QuestionFilter">
+		        select count(1) from answer a, question q where a.question=q.id and <include refid="activeQuestion"/> and a.session=#{session}  
+
+	</select>
+	
+	<!--/////////  END ANSWERED -->
+	
+	
+	
+	
+	<!-- ///////// QUESTIONS for session -->
+	
+	<select id="findSessionFilterQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+		SELECT 
+		<include refid="questionFields"/>
+		FROM (select * from question q where q.session=#{session}  order by q.id offset #{offset} limit #{limit} ) q 
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}
+  		order by q.id desc , option.ord
+	</select>
+	<select id="findSessionFilterQuestionCount" resultType="long" parameterType="QuestionFilter">
+  		SELECT count(1)
+		FROM question q where q.session=#{session}
+	</select>		
+	
+	<!-- ///////// END QUESTIONS for session -->
+	
+	
+	
+	
+	
+	
+	<!-- ////// FIND POPULAR question  -->
+	
+	<select id="findPopularQuestionCount" resultType="long" parameterType="QuestionFilter">
+  		SELECT count(1)
+		FROM question q
+		where <include refid="activeQuestion"/> and q.answer_count is not null
+    </select>	
+    <select id="findPopularQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+  		<include refid="activeQuestionSql"/> 
+  		order by COALESCE(q.last_answered, date '2015-01-01') desc, q.answer_count , option.ord
+    </select>	
+	<!-- ////// END FIND POPULAR question  -->
+
+
+
+	<!-- //////// LATEST QUESTION -->
+	<select id="findLatestQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+		SELECT 
+		<include refid="questionFields"/>
+		FROM (select * from question q where <include refid="activeQuestion"/> and 
+		( (q.answer_count &lt; 50 and q.create_dt &gt; (now() - interval '10 day')) or q.validation=60)
+		order by q.last_answered desc,q.id desc offset #{offset} limit #{limit} ) q 
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}
+		order by q.id desc , option.ord 
+	</select>
+	<select id="findLatestQuestionCount" resultType="long" parameterType="QuestionFilter">
+		SELECT count(1)
+		FROM question q
+		where <include refid="activeQuestion"/> and ( (q.answer_count &lt; 50 and q.create_dt &gt; (now() - interval '10 day')) or validation=60) 
+	</select>
+	<!-- //////// END LATEST QUESTION -->
+	
+
+
+	<!-- ////// QUERY question  -->	
+	
+	<select id="freeTextQueryQuestion" resultType="SearchResult" resultMap="SearchResultMap" parameterType="QuestionFilter">
+		select id, title, 'q' as type from question q where <include refid="activeQuestion"/> and
+	    (q.textsearchable_index_col @@ plainto_tsquery (#{language}::regconfig, #{query}))
+		 order by COALESCE(q.last_answered, date '2015-01-01') desc,q.id desc offset #{offset} limit #{limit}
+	</select>
+	<select id="queryQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+		SELECT 
+		<include refid="questionFields"/>
+		FROM (
+		select * from question q where <include refid="activeQuestion"/> and 
+	    (q.textsearchable_index_col @@ plainto_tsquery (#{language}::regconfig, #{query}))
+		 order by COALESCE(q.last_answered, date '2015-01-01') desc offset #{offset} limit #{limit}
+		) q 
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}
+   		order by COALESCE(q.last_answered, date '2015-01-01') desc,option.ord
+	</select>	
+	<select id="queryQuestionCount" resultType="long" parameterType="QuestionFilter">
+		SELECT count(1)
+		FROM question q
+		where <include refid="activeQuestion"/> and
+	    (q.textsearchable_index_col @@ plainto_tsquery (#{language}::regconfig, #{query}))
+	</select>
+	<!-- ////// END QUERY question  -->	
+
+	<!-- ////// FIND TAG question  -->	
+	<select id="findTagQuestion" resultType="Question" resultMap="QuestionResult" parameterType="QuestionFilter">
+		SELECT 
+		<include refid="questionFields"/>
+		FROM (select * from question q where <include refid="activeQuestion"/> and #{tag} = ANY (tags)
+		order by COALESCE(q.last_answered, date '2015-01-01') desc,q.id desc offset #{offset} limit #{limit} ) q 
+		left join location_data on q.target_location=location_data.id
+		left join country on q.target_country=country.code
+		left join option on q.id=option.question
+		left join answer on q.id=answer.question and answer.session=#{session}	
+	    order by COALESCE(q.last_answered, date '2015-01-01') desc , option.ord
+	</select>
+	<select id="findTagQuestionCount" resultType="long" parameterType="QuestionFilter">
+		SELECT count(1)
+		FROM question q
+		where <include refid="activeQuestion"/> and
+	    #{tag} = ANY (tags)
+	</select>
+	<!-- ////// END FIND TAG question  -->		
+
+	<!-- ////// QUESTION COUNT BY COUNTRY  -->	
+	<select id="getQuestionCountryCount" resultType="long" parameterType="QuestionFilter">
+		SELECT count(1)
+		FROM question q
+		where <include refid="activeQuestion"/> and q.country = #{countryCode}
+	</select>
+	<!-- ////// COUNTRYS WITH QUESTIONS  -->	
+	
+
+
+<!--  MODIFY -->
+
+	<insert id="insertOption" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Option">
+		INSERT INTO option (
+		question,
+		style,
+		text,
+		ord
+		)
+		values (
+		#{question.id},
+		#{style},
+		#{text},
+		#{ord}	
+		)
+	</insert>
+	
+
+
+	<update id="updateOption" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Option">
+		update option 
+		set text=#{text},
+			style=#{style}
+		where 
+		id=#{id}
+
+	</update>
+	
+	<delete id="deleteOption" parameterType="Option">
+	delete from option where id=#{id}
+	</delete>
+	<delete id="deleteQuestionOptions" parameterType="Question">
+	delete from option where question=#{id}
+	</delete>
+
+	<insert id="insertQuestion" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Question">
+		INSERT INTO question (
+		title,
+		title_en,
+		description,
+		url,
+		session,
+		target_location,
+		target_country,
+		mandatory,
+		type,
+		img,
+		color,
+		status,
+		tags,
+		valid_till,
+		ticket,
+		country,
+		language,
+		categories,
+		textsearchable_index_col
+		)
+		values (
+		#{title},
+		#{titleEn},
+		#{description},
+		#{url},
+		#{session.code},
+		#{targetLocation.id},
+		#{targetCountry},
+		#{mandatory},
+		#{type},
+		#{img},
+		#{color},
+		#{status},
+		#{tags,javaType=String[],jdbcType=OTHER,typeHandler=TextArrayTypeHandler},
+		#{validTill},
+		#{ticket},
+		#{country},
+		#{language},
+		#{categories,javaType=String[],jdbcType=OTHER,typeHandler=TextArrayTypeHandler},	
+		to_tsvector(coalesce(#{language},'english')::regconfig, coalesce(#{title},'') || ' ' || coalesce(#{description},''))		
+		)
+	</insert>
+	<update id="updateQuestion" keyProperty="id" keyColumn="id" parameterType="Question">
+		update question set
+		title=#{title},
+		title_en=#{titleEn},
+		description=#{description},
+		url=#{url},
+		target_location=#{targetLocation.id},
+		target_country=#{targetCountry},
+		mandatory=#{mandatory},
+		type=#{type},
+		img=#{img},
+		color=#{color},
+		tags=#{tags,javaType=String[],jdbcType=OTHER,typeHandler=TextArrayTypeHandler},
+		categories=#{tags,javaType=String[],jdbcType=OTHER,typeHandler=TextArrayTypeHandler},	
+		valid_till=#{validTill},
+		ticket=#{ticket},
+		textsearchable_index_col=to_tsvector(coalesce(#{language},'english')::regconfig, coalesce(#{title},'') || ' ' || coalesce(#{description},''))		
+		
+		where id=#{id}
+	</update>
+	
+	
+	<update id="updateQuestionStatus" keyProperty="id" keyColumn="id" parameterType="Question">
+		update question set
+		status=#{status}
+		where id=#{id}
+	</update>	
+	<update id="incrementAnswerCount" keyProperty="id" keyColumn="id" parameterType="long">
+		update question set
+		last_answered=now(),
+		answer_count=(select COALESCE (answer_count,0)+1)
+		where id=#{id}
+	</update>	
+	
+	
+		
+</mapper>
+	

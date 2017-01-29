@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+	 
+
+<mapper namespace="eu.dorsum.webtrader.services.menu.impl.MenuMapper">
+	
+	<cache
+	  eviction="LRU"
+	  flushInterval="60000"
+	  size="512"
+	  readOnly="true"/>	
+	 
+	<select id="getMenuItems" resultType="MenuItem">
+		<!-- TODO fix name field -->
+		SELECT 
+			m.id as id,
+			m.code as code,
+			m.parent_id as parentId,
+			m.icon as icon, 
+			m.state as state,
+			m.description_1 as description1,
+			m.description_2 as description2,
+			m.description_3 as description3,
+			m.description_4 as description4,
+			m.description_5 as description5,
+			m.description_6 as description6,
+			m.description_7 as description7,
+			m.description_8 as description8,
+			m.description_9 as description9, 
+			m.permission_id as permissionId,
+			m.role as role,
+			m.ord as ord,
+			m.modify_dt as modifyDt,
+			m.modify_opcode as modifyOpCode,
+			CASE WHEN lower('${lang}')='hu' THEN m.description_1 ELSE m.description_2 END as name  
+		FROM menu_items m 
+		ORDER BY ord
+	</select>
+	
+	<insert id="createMenu" parameterType="MenuItem" useGeneratedKeys="true" keyProperty="id" keyColumn="id"> 
+		INSERT INTO menu_items (
+			code,
+			parent_id,
+			icon,
+			state,
+			description_1,
+			description_2,
+			description_3,
+			description_4,
+			description_5,
+			description_6,
+			description_7,
+			description_8,
+			description_9,
+			permission_id,
+			role,
+			ord,
+			modify_dt,
+			modify_opcode
+		) VALUES (
+	    	#{code},
+	    	#{parentId},
+	    	#{icon},
+	    	#{state},
+	    	#{description1},
+	    	#{description2},
+	    	#{description3},
+	    	#{description4},
+	    	#{description5},
+	    	#{description6},
+	    	#{description7},
+	    	#{description8},
+	    	#{description9},
+	    	#{permissionId},
+	    	#{role},
+	    	#{ord},
+	    	getDate(),
+	    	#{modifyOpCode}
+	    )
+	</insert> 
+	   
+	<update id="modifyMenu" parameterType="MenuItem">
+		UPDATE menu_items 
+		SET 
+			ord = #{ord}, 
+			state = #{state}, 
+			description_1 = #{description1},
+			description_2 = #{description2},
+			description_3 = #{description3},
+			description_4 = #{description4},
+			description_5 = #{description5},
+			description_6 = #{description6},
+			description_7 = #{description7},
+			description_8 = #{description8},
+			description_9 = #{description9},
+			parent_id = #{parentId},
+			icon = #{icon},
+			role = #{role},
+			modify_dt = getDate(),
+			modify_opcode = #{modifyOpCode},
+			permission_id = #{permissionId} 
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="deleteMenu" parameterType="MenuItem">
+		DELETE FROM menu_items WHERE id = #{id}
+	</delete>
+
+</mapper>

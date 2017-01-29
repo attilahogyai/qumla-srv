@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN' 'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace="eu.dorsum.webtrader.services.login.impl.LoginModuleMapper">
+	
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true"/>	
+	  
+	<select id="getOperatorPassword" resultType="OperatorPassword">
+		<![CDATA[
+		SELECT password, salt
+		FROM operator_password 
+		WHERE 
+			operator_id = (SELECT id FROM operator WHERE opcode = #{opCode} and active = 1 and (loginattemptleft is null or loginattemptleft > 0))
+			and
+			getdate() between dt_from and dt_till
+		]]>
+	</select>
+	
+	<update id="closeOldPassword">
+		<![CDATA[
+		UPDATE operator_password
+			set dt_till = GETDATE()
+		WHERE 
+			id = (select max(id) FROM operator_password WHERE operator_id = (select id FROM operator WHERE opcode = #{opCode}));
+		]]>
+	</update>
+	
+	<update id="updatePassword">
+		<![CDATA[
+		INSERT into operator_password (
+			operator_id, 
+			password,
+			salt,
+			dt_from,
+			dt_till,
+			modify_dt,
+			modify_opcode)
+		VALUES (
+			(SELECT id FROM operator WHERE opcode = #{opCode}),
+			#{password},
+			#{salt},
+			getdate(),
+			dateadd(year, +1, getdate()),
+			getdate(),
+			#{opCode}
+		)
+		]]>
+	</update>
+	
+	<update id="updatePasswordChangeDate">
+		<![CDATA[
+			UPDATE operator SET lastpasswdchg = getdate() WHERE opcode = #{opCode};
+		]]>
+	</update>
+	
+	<insert id="createSession">
+		<![CDATA[
+		INSERT INTO operator_session (
+			operator_id,
+			login,
+			language,
+			client_ip
+		)
+		VALUES (
+			(SELECT id FROM operator WHERE opcode=#{login}),
+			getdate(),
+			#{lang},
+			#{ipAddress}
+		)
+		]]>
+	</insert>
+	
+	<insert id="updateOperatorOnLoginSuccess">
+		UPDATE operator SET lastlogin = getdate(), loginattemptleft = null WHERE opcode=#{login}
+	</insert>
+	
+	<update id="closeSession">
+		<![CDATA[
+		UPDATE operator_session 
+			SET logout = getdate()
+		WHERE id = (select max(id) FROM operator_session WHERE operator_id=(SELECT id FROM operator WHERE opcode=#{opCode}) and logout is null)
+		]]>
+	</update>
+	
+	<select id="getUasProperties" resultType="PasswordSetting">
+		<![CDATA[
+		SELECT code, value FROM password_settings
+		]]>
+	</select>
+	
+	<update id="updateFailedAttempts">
+		<![CDATA[
+		UPDATE operator 
+			SET loginattemptleft =  
+				(case 
+					when loginattemptleft is null then #{maxAllowed}-1
+					when loginattemptleft > 0 then loginattemptleft -1
+					else 0
+				end)
+		WHERE opcode = #{opCode}
+		]]>
+	</update>
+	
+	<select id="getPasswordExpirationData" resultType="PasswordExpirationData">
+		<![CDATA[
+		SELECT 
+			lastpasswdchg,
+			passwdchgforced
+		FROM operator 
+		WHERE opcode = #{opCode}
+		]]>
+	</select>
+	
+</mapper>

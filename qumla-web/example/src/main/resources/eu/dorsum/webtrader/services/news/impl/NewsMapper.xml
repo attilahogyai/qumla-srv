@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace="eu.dorsum.webtrader.services.news.impl.NewsMapper">
+	
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="false"/>	
+	 
+	<select id="getNews" resultType="News">
+		select id, message, status, category, target, language, title  from news
+	</select>
+	
+	<insert id="createNews" parameterType="News" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+	INSERT INTO news(message, status,category,target,language,title)
+            VALUES (#{message}, #{status},#{category},#{target},#{language},#{title})
+	</insert>
+	
+	<update id="modifyNews" parameterType="News">
+	UPDATE news 
+	SET 
+		message = #{message}, 
+		status = #{status},
+		category = #{category},
+		target = #{target},
+		language = #{language},
+		title = #{title}
+	WHERE id=#{id}
+	</update>
+	
+	<delete id="deleteNews" parameterType="News">
+	DELETE FROM news where id=#{id}</delete>
+	
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.qumla.service.impl.LocationDataDaoMapper">
+
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true" />
+
+
+	<resultMap id="locationDataResult" type="LocationData" autoMapping="true">
+		<id property="id" column="id" />
+	</resultMap>
+	<resultMap id="countryDataResult" type="Country" autoMapping="true">
+		<id property="code" column="code" />
+	</resultMap>
+	
+	<sql id="selectLocation">
+		SELECT * from location_data
+	</sql>
+
+	<select id="findOne" resultMap="locationDataResult">
+		<include refid="selectLocation"></include>
+		where id=#{id}
+	</select>
+	<select id="findByCity" resultMap="locationDataResult">
+		<include refid="selectLocation"></include>
+		where country=#{country} and city=#{city} order by id limit 1
+	</select>
+	<select id="findByName" resultMap="locationDataResult">
+		<include refid="selectLocation"></include>
+		where country=#{country} and lower(name)=lower(#{name}) order by id limit 1
+	</select>
+	<select id="findCountry" resultMap="countryDataResult">
+		select * from country where code=#{code}
+	</select>
+	<select id="findAllCountry" resultMap="countryDataResult">
+		select * from country
+	</select>
+	
+	
+	<insert id="insertLocation" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Location">
+		INSERT INTO location_data (
+		name,
+		city,
+		ip,
+		country,
+		lon,
+		lat,
+		google_place_id,
+		political_area_1,
+		political_area_2,
+		type
+		)
+		values (
+		#{name},
+		#{city},
+		#{ip},
+		#{country},		
+		#{lon},
+		#{lat},
+		#{googlePlaceId},
+		#{politicalArea1},
+		#{politicalArea2},
+		#{type}
+		)
+	</insert>
+
+	<update id="updateLocation" keyProperty="id" keyColumn="id"
+		parameterType="Location">
+		update location_data set
+		lon=#{lon},
+		lat=#{lat},
+		name=#{name},
+		city=#{city},
+		country=#{country},
+		google_place_id=#{googlePlaceId},
+		political_area_1=#{politicalArea1},
+		political_area_2=#{politicalArea2},
+		type=#{type}
+		where id=#{id}
+	</update>
+	<update id="updateCountryQuestionCount" keyProperty="code" keyColumn="code"
+		parameterType="Country">
+		update country set
+		question_count=#{questionCount}
+		where code=#{code}
+	</update>
+	<update id="incrementCountryQuestionCount" keyProperty="code" keyColumn="code"
+		parameterType="Country">
+		update country set
+		question_count=COALESCE(question_count,0) + 1
+		where code=#{code}
+	</update>
+	<update id="decrementCountryQuestionCount" keyProperty="code" keyColumn="code"
+		parameterType="Country">
+		update country set
+		question_count=COALESCE(question_count,0) - 1
+		where code=#{code}
+	</update>
+	
+</mapper>

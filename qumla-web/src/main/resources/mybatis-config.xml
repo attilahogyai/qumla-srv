@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<settings>
+		<setting name="jdbcTypeForNull" value="OTHER" />
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+	</settings>
+
+	<typeAliases>
+		<typeAlias alias="Langtext"
+			type="com.qumla.domain.dictionary.Langtext" />
+		<typeAlias alias="LangtextRq"
+			type="com.qumla.domain.dictionary.LangtextRq" />
+		<typeAlias alias="Session" type="com.qumla.domain.user.Session" />
+		<typeAlias alias="Useracc" type="com.qumla.domain.user.Useracc" />
+		
+		<typeAlias alias="Question" type="com.qumla.domain.question.Question" />
+		
+		<typeAlias alias="SearchResult" type="com.qumla.domain.search.SearchResult" />
+		
+		<typeAlias alias="Option" type="com.qumla.domain.question.Option" />
+		<typeAlias alias="Location" type="com.qumla.domain.location.Location" />
+		<typeAlias alias="LocationData" type="com.qumla.domain.location.LocationData" />
+		
+		<typeAlias alias="Country" type="com.qumla.domain.location.Country" />
+		<typeAlias alias="Answer" type="com.qumla.domain.answer.Answer" />
+		<typeAlias alias="AnswerStat" type="com.qumla.domain.answer.AnswerStat" />
+		<typeAlias alias="AnswerStatLocation" type="com.qumla.domain.answer.AnswerStatLocation" />
+		<typeAlias alias="AnswerStatOption" type="com.qumla.domain.answer.AnswerStatOption" />
+		
+		<typeAlias alias="Image" type="com.qumla.domain.image.Image" />
+		<typeAlias alias="Comment" type="com.qumla.domain.comment.Comment" />
+
+		<typeAlias alias="UUID" type="java.util.UUID" />
+		<typeAlias alias="String[]" type="[Ljava.lang.String;" />
+		<typeAlias alias="UUIDTypeHandler"
+			type="com.manniwood.mmpt.typehandlers.UUIDTypeHandler" />
+		<typeAlias alias="IntegerArrayTypeHandler"
+			type="com.manniwood.mmpt.typehandlers.IntegerArrayTypeHandler" />
+		<typeAlias alias="BigIntArrayTypeHandler"
+			type="com.manniwood.mmpt.typehandlers.BigIntArrayTypeHandler" />
+		<typeAlias alias="SmallIntArrayTypeHandler"
+			type="com.manniwood.mmpt.typehandlers.SmallIntArrayTypeHandler" />
+		<typeAlias alias="TextArrayTypeHandler"
+			type="com.manniwood.mmpt.typehandlers.TextArrayTypeHandler" />
+			
+		<typeAlias alias="InstantHandler" type="com.github.javaplugs.mybatis.InstantHandler" />
+		<typeAlias alias="LocalDateHandler" type="com.github.javaplugs.mybatis.LocalDateHandler" />
+		<typeAlias alias="LocalDateTimeHandler" type="com.github.javaplugs.mybatis.LocalDateTimeHandler" />
+		<typeAlias alias="LocalTimeHandler" type="com.github.javaplugs.mybatis.LocalTimeHandler" />
+		<typeAlias alias="OffsetDateTimeHandler" type="com.github.javaplugs.mybatis.OffsetDateTimeHandler" />
+		<typeAlias alias="ZonedDateTimeHandler" type="com.github.javaplugs.mybatis.ZonedDateTimeHandler" />
+		
+		<typeAlias alias="LocationResult" type="com.qumla.domain.answer.LocationResult" />
+		<typeAlias alias="CountryResult" type="com.qumla.domain.answer.CountryResult" />
+		<typeAlias alias="AnswerStatHistory" type="com.qumla.domain.answer.AnswerStatHistory" />
+		
+		
+		
+		<typeAlias alias="Tag" type="com.qumla.domain.tag.Tag" />
+		<typeAlias alias="Subscription" type="com.qumla.domain.user.Subscription" />
+		
+			
+		<!--  filter types -->
+		<typeAlias alias="QuestionFilter" type="com.qumla.domain.question.QuestionFilter" />
+		
+	</typeAliases>
+
+
+	<typeHandlers>
+		<package name="com.manniwood.mmpt.typehandlers" />
+	</typeHandlers>
+
+	<plugins>
+		<plugin interceptor="com.qumla.service.impl.MyBatisQueryInterceptor" />
+	</plugins>
+
+
+	<!-- <mappers> <mapper resource="eu/dorsum/webtrader/domain/mybatis/ClientService.xml" 
+		/> </mappers> -->
+
+</configuration>
+

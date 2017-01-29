@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN' 'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace="eu.dorsum.webtrader.services.dictionary.impl.DictionaryMapper">
+	
+	<cache
+	  eviction="LRU"
+	  flushInterval="60000"
+	  size="512"
+	  readOnly="true"/>	
+	 
+	<select id="getDictionaryItems" resultType="DictionaryItem">
+		SELECT code, (CASE when lower(#{lang}) = 'hu' THEN description_1 ELSE description_2 END) AS description FROM label_dict
+	</select>
+	
+	<select id="getLanguageId" resultType="java.lang.Integer">
+		SELECT 
+        	coalesce(l.id, fix.id)
+        FROM 
+        	(select 2 as id from dual) fix
+            LEFT JOIN language l ON lower(l.prefix) = lower(#{language})
+	</select>
+	
+	<select id="getLanguages" resultType="string">
+		SELECT prefix FROM language WHERE active = 1
+	</select>
+	
+	<update id="updateItemInDb">
+		UPDATE label_dict
+		<set>
+	      <if test="language == 'hu'">description_1 = #{description},</if>
+	      <if test="language == 'en'">description_2 = #{description},</if>
+			modify_dt = getDate(),
+			modify_opcode = #{modifyOpCode}
+		</set>
+		WHERE code = #{code}
+	</update>
+
+	<insert id="insertItemToDb" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		INSERT INTO label_dict (code, 
+			<if test="language == 'hu'">
+	    		description_1,
+	  		</if>
+	  		<if test="language == 'en'">
+	    		description_2,
+	  		</if>
+	  		modify_dt,
+	  		modify_opcode
+		) values (
+			#{code},
+			#{description},
+			getDate(),
+			#{modifyOpCode}
+		)
+	</insert>
+	
+	<delete id="deleteItemFromDb">
+		DELETE FROM label_dict
+		WHERE code = #{code}
+	</delete>
+</mapper>

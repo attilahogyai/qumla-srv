@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<settings>
+		<setting name="jdbcTypeForNull" value="VARCHAR"/>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	<typeAliases>
+		<typeAlias alias="User" type="eu.dorsum.webtrader.domain.user.User" />
+		<typeAlias alias="UserHierarchy" type="eu.dorsum.webtrader.domain.user.UserHierarchy" />
+		<typeAlias alias="Permission" type="eu.dorsum.webtrader.domain.permission.Permission" />
+		<typeAlias alias="PermissionGroup" type="eu.dorsum.webtrader.domain.permission.PermissionGroup" />
+		<typeAlias alias="UserPic" type="eu.dorsum.webtrader.domain.user.UserPic" />
+		<typeAlias alias="MenuItem" type="eu.dorsum.webtrader.domain.menu.MenuItem" />
+
+		<typeAlias alias="DictionaryItem" type="eu.dorsum.webtrader.domain.dictionary.DictionaryItem" />
+		
+		<typeAlias alias="News" type="eu.dorsum.webtrader.domain.news.News" />
+		
+		<typeAlias alias="Warning" type="eu.dorsum.webtrader.domain.user.Warning" />
+		<typeAlias alias="Favourite" type="eu.dorsum.webtrader.domain.user.Favourite" />
+		
+		<typeAlias alias="Branch" type="eu.dorsum.webtrader.domain.company.Branch" />
+		<typeAlias alias="Region" type="eu.dorsum.webtrader.domain.company.Region" />
+		<typeAlias alias="Country" type="eu.dorsum.webtrader.domain.company.Country" />
+		<typeAlias alias="CountryFlag" type="eu.dorsum.webtrader.domain.company.CountryFlag" />
+		
+
+		<typeAlias alias="Client" type="eu.dorsum.webtrader.domain.client.Client" />
+		<typeAlias alias="ClientPic" type="eu.dorsum.webtrader.domain.client.ClientPic" />
+		<typeAlias alias="ClientRepresentative" type="eu.dorsum.webtrader.domain.client.ClientRepresentative" />
+
+		<typeAlias alias="Portfolio" type="eu.dorsum.webtrader.domain.client.Portfolio" />
+		<typeAlias alias="PortfolioComposition" type="eu.dorsum.webtrader.domain.client.PortfolioComposition" />
+		<typeAlias alias="PortfolioCashflow" type="eu.dorsum.webtrader.domain.portfolio.PortfolioCashflow" />
+		<typeAlias alias="PortfolioFee" type="eu.dorsum.webtrader.domain.portfolio.PortfolioFee" />
+		<typeAlias alias="PortfolioFreeCash" type="eu.dorsum.webtrader.domain.portfolio.PortfolioFreeCash" />
+		<typeAlias alias="PortfolioTransaction" type="eu.dorsum.webtrader.domain.portfolio.PortfolioTransaction" />
+		<typeAlias alias="PortfolioValue" type="eu.dorsum.webtrader.domain.portfolio.PortfolioValue" />
+		<typeAlias alias="PortfolioInstrumentChange" type="eu.dorsum.webtrader.domain.portfolio.PortfolioInstrumentChange" />
+		<typeAlias alias="PortfolioProfitLoss" type="eu.dorsum.webtrader.domain.portfolio.PortfolioProfitLoss" />
+		<typeAlias alias="PortfolioRealizedProfitLoss" type="eu.dorsum.webtrader.domain.portfolio.PortfolioRealizedProfitLoss" />
+		<typeAlias alias="PortfolioUnrealizedProfitLoss" type="eu.dorsum.webtrader.domain.portfolio.PortfolioUnrealizedProfitLoss" />
+		<typeAlias alias="PortfolioYield" type="eu.dorsum.webtrader.domain.portfolio.PortfolioYield" />
+		
+		<!--portfolio model -->
+		<typeAlias alias="Model" type="eu.dorsum.webtrader.domain.portfolio.Model" />
+		<typeAlias alias="ModelInterval" type="eu.dorsum.webtrader.domain.portfolio.ModelInterval" />
+		<typeAlias alias="ModelYield" type="eu.dorsum.webtrader.domain.portfolio.ModelYield" />
+		<typeAlias alias="ModelItem" type="eu.dorsum.webtrader.domain.portfolio.ModelItem" />
+		<typeAlias alias="ModelCardPic" type="eu.dorsum.webtrader.domain.portfolio.ModelCardPic" />
+		
+		<!-- market data -->
+		<typeAlias alias="CurrencyRate" type="eu.dorsum.webtrader.domain.marketdata.CurrencyRate" />
+		<typeAlias alias="Market" type="eu.dorsum.webtrader.domain.marketdata.Market" />
+		<typeAlias alias="InstrumentPrice" type="eu.dorsum.webtrader.domain.marketdata.InstrumentPrice" />
+		
+		<!-- kpi -->
+		<typeAlias alias="WidgetChartData" type="eu.dorsum.webtrader.domain.kpi.WidgetChartData" />
+		<typeAlias alias="WidgetSumData" type="eu.dorsum.webtrader.domain.kpi.WidgetSumData" />
+	
+		<typeAlias alias="Instrument" type="eu.dorsum.webtrader.domain.instrument.Instrument" />
+		<typeAlias alias="PasswordSetting" type="eu.dorsum.webtrader.domain.login.PasswordSetting" />
+		<typeAlias alias="OperatorPassword" type="eu.dorsum.webtrader.domain.login.OperatorPassword" />
+		<typeAlias alias="PasswordExpirationData" type="eu.dorsum.webtrader.domain.login.PasswordExpirationData" />
+		
+		<!-- import -->
+		<typeAlias alias="ImportTask" type="eu.dorsum.webtrader.domain.dataimport.ImportTask" />
+		<typeAlias alias="ImportCheck" type="eu.dorsum.webtrader.domain.dataimport.ImportCheck" />
+	</typeAliases>
+	
+	<plugins>
+		<plugin interceptor="eu.dorsum.webtrader.services.MyBatisQueryInterceptor" />
+	</plugins>
+
+	<!-- 
+	<mappers>
+		<mapper resource="eu/dorsum/webtrader/domain/mybatis/ClientService.xml" />
+	</mappers> 
+	-->
+	
+</configuration>
+

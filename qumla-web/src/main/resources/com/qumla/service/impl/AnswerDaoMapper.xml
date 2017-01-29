@@ -1,0 +1,418 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+	  'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.qumla.service.impl.AnswerDaoMapper">
+
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true" />
+
+	<resultMap id="getAnswerResult" type="Answer" autoMapping="true">
+		<id property="id" column="id" />
+
+	</resultMap>
+	<resultMap id="getAnswerStatResult" type="AnswerStat"
+		autoMapping="true">
+		<id property="id" column="aid" />
+		<result property="answerdate" column="adate" typeHandler="LocalDateHandler" />
+		<result property="count" column="count" />
+		<result property="hour" column="hour" />
+
+		<association property="location" javaType="LocationData">
+			<id property="id" column="lid" />
+			<result property="name" column="location_name" />
+			<result property="country" column="ccode" />
+		</association>
+		<association property="country" javaType="Country">
+			<id property="code" column="ccode" />
+			<result property="countryName" column="country_name" />
+		</association>
+		<association property="option" javaType="Option">
+			<id property="id" column="opid" />
+			<result property="text" column="optext" />
+			<result property="style" column="opstyle" />
+		</association>
+		<association property="question" javaType="Question">
+			<id property="id" column="qid" />
+		</association>
+	</resultMap>
+	<resultMap id="getAnswerStatOptionResult" type="AnswerStatOption"
+		autoMapping="true">
+		<id property="id" column="aid" />
+		<result property="count" column="count" />
+		<result property="firstdate" column="firstdate" typeHandler="LocalDateHandler"/>
+		<association property="option" javaType="Option">
+			<id property="id" column="opid" />
+			<result property="text" column="optext" />
+			<result property="style" column="opstyle" />
+			<result property="ord" column="oord" />
+		</association>
+		<association property="question" javaType="Question">
+			<id property="id" column="qid" />
+		</association>
+	</resultMap>
+	<resultMap id="getAnswerStatLocationResult" type="AnswerStatLocation"
+		autoMapping="true">
+		<id property="id" column="aid" />
+		<result property="count" column="count" />
+		<result property="lan" column="lan" />
+		<result property="lot" column="lot" />
+		<result property="firstdate" column="firstdate" typeHandler="LocalDateHandler"/>
+		<association property="location" javaType="LocationData">
+			<id property="id" column="lid" />
+			<result property="name" column="location_name" />
+			<result property="country" column="ccode" />
+		</association>
+		<association property="country" javaType="Country">
+			<id property="code" column="ccode" />
+			<result property="countryName" column="country_name" />
+		</association>
+		<association property="option" javaType="Option">
+			<id property="id" column="opid" />
+			<result property="text" column="optext" />
+			<result property="style" column="opstyle" />
+		</association>
+		<association property="question" javaType="Question">
+			<id property="id" column="qid" />
+		</association>
+	</resultMap>
+
+
+	<sql id="answerStatSql">
+		SELECT answer_stat.id aid,
+		answer_stat.count as count,
+		answer_stat.answerdate as adate,
+		answer_stat.hour as hour,
+
+		location_data.id as lid,
+		country.code as ccode,
+		location_data.name,
+		country.country_name,
+		option.id as opid,
+		option.question as qid,
+		option.text as optext
+		FROM option,
+		answer_stat left join location_data on answer_stat.location=location_data.id
+		left join country on answer_stat.country=country.code
+		where 
+		answer_stat.option=option.id
+	</sql>
+	<sql id="answerStatOptionSql">
+		SELECT answer_stat_option.id aid,
+		answer_stat_option.count as count,
+		answer_stat_option.firstdate as firstdate,	
+		option.id as opid,
+		option.question as qid,
+		option.text as optext,
+		option.ord as oord
+		FROM option,
+		answer_stat_option 
+		where 
+		answer_stat_option.option=option.id
+	</sql>
+	<sql id="answerStatLocationSql">
+		SELECT answer_stat_location.id aid,
+		answer_stat_location.count as count,
+		answer_stat_location.firstdate as firstdate,
+		location_data.id as lid,
+		country.code as ccode,
+		location_data.name,
+		country.country_name,
+		option.id as opid,
+		option.question as qid,
+		option.text as optext
+		FROM option,
+		answer_stat_location left join location_data on answer_stat_location.location=location_data.id
+		left join country on answer_stat_location.country=country.code
+		where 
+		answer_stat_location.option=option.id
+	</sql>
+	
+	<sql id="answerSql">
+		SELECT *
+		FROM answer
+	</sql>
+	<select id="findOneAnswer" resultMap="getAnswerResult">
+		<include refid="answerSql"></include>
+		where answer.id=#{id}
+	</select>
+	<select id="findAnswerForQuestion" resultMap="getAnswerResult">
+		<include refid="answerSql"></include>
+		where answer.question=#{qid} order by answer.id
+	</select>
+	<select id="getAnswerStatCountForQuestion" resultType="long">
+		select count(1) from answer_stat
+		where answer_stat.question=#{qid}
+	</select>	
+	<select id="findOneAnswerStat" resultMap="getAnswerStatResult">
+		<include refid="answerStatSql"></include>
+		and answer_stat.id=#{id}
+	</select>
+	<select id="findOneByQuestionAndSession" resultMap="getAnswerResult">
+		<include refid="answerSql"></include>
+		where session=#{session} and question=#{question}
+	</select>
+
+	<select id="findAnswerStatForQuestion" resultType="AnswerStat"
+		resultMap="getAnswerStatResult">
+		<include refid="answerStatSql"></include>
+		and answer_stat.question=#{0} order by answer_stat.id
+	</select>
+
+	<insert id="insertAnswer" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Answer">
+		INSERT INTO answer (
+		session,
+		question,
+		location,
+		option,
+		country,
+		create_dt
+		)
+
+		values (
+
+		#{session},
+		#{question},
+		#{location},
+		#{option},
+		#{country},
+		now()
+		)
+	</insert>
+
+	<update id="updateAnswer" keyProperty="id" keyColumn="id"
+		parameterType="Answer">
+		update answer set
+		session=#{session.id},
+		question=#{question.id},
+		location=#{location.id},
+		option=#{option.id},
+		country=#{country.code}
+		where id=#{id}
+	</update>
+
+	<update id="setAnswerIndexed" keyProperty="id" keyColumn="id">
+		update answer set indexed=1 where id=#{id}	
+	</update>
+	<update id="resetIndexedAnswersForQuestion">
+		update answer set indexed=0 where question=#{qid}
+	</update>
+	<update id="resetAnswerStatForQuestion">
+		delete from answer_stat where question=#{qid}
+	</update>
+	<update id="resetAnswerStatLocationForQuestion">
+		delete from answer_stat_location where question=#{qid}
+	</update>
+	<update id="resetAnswerStatOptionForQuestion">
+		delete from answer_stat_option where question=#{qid}
+	</update>
+	<update id="updateLocationForAnswers">
+		select update_location(#{qid})
+	</update>
+
+<!--  answer_stat insert / updates -->
+		<insert id="saveAnswerStat" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStat">
+			INSERT INTO answer_stat
+			(
+			question,
+			location,
+			option,
+			country,
+			answerdate,
+			count
+			)
+
+			values (
+			#{question.id},
+			#{location.id},
+			#{option.id},
+			#{country.code},
+			#{answerdate,javaType=java.time.LocalDate,jdbcType=OTHER,typeHandler=LocalDateHandler},
+			1
+			)
+		</insert>
+		<update id="updateAnswerStatById" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStat">
+			update answer_stat
+			set
+			question=#{question.id},
+			location=#{location.id},
+			option=#{option.id},
+			country=#{country.code},
+			answerdate=#{answerdate,javaType=java.time.LocalDate,jdbcType=OTHER,typeHandler=LocalDateHandler},
+			count=#{count}
+			where id=#{id}
+		</update>
+		<update id="incrementAnswerStatByFields" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStat">
+			update answer_stat
+			set
+			count=count+1
+			where
+			<if test="location.id != null">
+			location=#{location.id} and
+  			</if>
+			option=#{option.id} and
+			<if test="country.code != null">	
+			country=#{country.code} and
+			</if>		
+			answerdate=#{answerdate,javaType=java.time.LocalDate,jdbcType=OTHER,typeHandler=LocalDateHandler}
+		</update>
+
+<!--  answer_stat_location insert / updates -->
+		
+		<insert id="saveAnswerStatLocation" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStatLocation">
+			INSERT INTO answer_stat_location
+			(
+			question,
+			location,
+			option,
+			country,
+			firstdate,
+			count
+			)
+
+			values (
+			#{question.id},
+			#{location.id},
+			#{option.id},
+			#{country.code},
+			#{firstdate,javaType=java.time.LocalDate,jdbcType=OTHER,typeHandler=LocalDateHandler},
+			1
+			)
+		</insert>
+		<update id="incrementAnswerStatLocationByFields" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStatLocation">
+			update answer_stat_location
+			set
+			count=count+1
+			where
+			option=#{option.id}			
+			<if test="location.id != null">
+			and location=#{location.id}
+  			</if>
+			<if test="country.code != null">	
+			and country=#{country.code}
+			</if>		
+		</update>
+		<select id="findAnswerStatLocationForQuestion" resultType="AnswerStatLocation"
+			resultMap="getAnswerStatLocationResult">
+			<include refid="answerStatLocationSql"></include>
+			and answer_stat_location.question=#{0} order by answer_stat_location.id
+		</select>	
+					
+<!--  answer_stat_option insert / updates -->
+		
+		<insert id="saveAnswerStatOption" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStatOption">
+			INSERT INTO answer_stat_option
+			(
+			question,
+			option,
+			firstdate,
+			count
+			)
+
+			values (
+			#{question.id},
+			#{option.id},
+			#{firstdate,javaType=java.time.LocalDate,jdbcType=OTHER,typeHandler=LocalDateHandler},
+			1
+			)
+		</insert>
+		<update id="incrementAnswerStatOptionByFields" useGeneratedKeys="true"
+			keyProperty="id" keyColumn="id" parameterType="AnswerStatOption">
+			update answer_stat_option
+			set
+			count=count+1
+			where
+			option=#{option.id}	
+		</update>		
+		<select id="findAnswerStatOptionForQuestion" resultType="AnswerStatOption"
+			resultMap="getAnswerStatOptionResult">
+			<include refid="answerStatOptionSql"></include>
+			and answer_stat_option.question=#{0} order by answer_stat_option.id
+		</select>
+		
+	<!-- LOCATION STATS -->
+		<select id="locationResult" resultType="LocationResult">
+select lc.*,o.text, l.name as name from 
+( SELECT answer_stat_location.location,answer_stat_location.option, 
+    answer_stat_location.count AS count
+   FROM answer_stat_location
+  WHERE answer_stat_location.question = #{qid}  and answer_stat_location.country=#{country}
+  order by answer_stat_location.location
+) lc left join location_data l on lc.location=l.id left join option o on lc.option=o.id
+		</select>
+		<select id="votingArea" resultType="LocationResult">
+select lc.*, l.name as name,l.lon as lon, l.lat as lat, count from 
+( SELECT answer_stat_location.location, sum(answer_stat_location.count) AS count
+   FROM answer_stat_location
+  WHERE answer_stat_location.question = #{qid}  
+  <if test="country != null">
+  and answer_stat_location.country=#{country}
+  </if>
+  group by answer_stat_location.location
+) lc left join location_data l on lc.location=l.id
+		</select>	
+		<select id="locationOptionResult" resultType="LocationResult">
+	select lc.*,o.text, l.name as name, l.lon as lon, l.lat as lat, count  from 
+	( SELECT answer_stat_location.location,answer_stat_location.option, 
+	    answer_stat_location.count AS count
+	   FROM answer_stat_location
+	  WHERE answer_stat_location.question = #{qid}  and answer_stat_location.country=#{country}
+	  and answer_stat_location.option=#{optionid}
+	  order by answer_stat_location.location
+	) lc left join location_data l on lc.location=l.id left join option o on lc.option=o.id
+		</select>		
+		<select id="regionResult" resultType="LocationResult">
+select name, option, sum(count) as count, text from (
+select lc.*,o.text as text, pa.name as name from 
+( SELECT answer_stat_location.location,answer_stat_location.option, 
+    answer_stat_location.count AS count
+   FROM answer_stat_location
+  WHERE answer_stat_location.question = #{qid}  and answer_stat_location.country=#{country}
+  order by answer_stat_location.location
+) lc left join location_data l on lc.location=l.id left join option o on lc.option=o.id
+left join location_data pa on l.political_area_1=pa.id) a
+group by name,option,text order by name,option 
+		</select>		
+		
+	<select id="regionOptionResult" resultType="LocationResult">
+select name, option,lat,lon, sum(count) as count from (
+select lc.*,o.text, pa.name as name, l.lon, l.lat from 
+( SELECT answer_stat_location.location,answer_stat_location.option, 
+    answer_stat_location.count AS count
+   FROM answer_stat_location
+  WHERE answer_stat_location.question = #{qid}  and answer_stat_location.country=#{country}
+  and answer_stat_location.option=#{optionid}
+  order by answer_stat_location.location
+) lc left join location_data l on lc.location=l.id left join option o on lc.option=o.id
+left join location_data pa on l.political_area_1=pa.id) a
+group by name,option,lat,lon order by name,option 
+		</select>		
+		
+		
+		<select id="countryResult" resultType="CountryResult">
+select lc.*,o.text, c.country_name as countryname, c.region as region from 
+( SELECT answer_stat_location.country,answer_stat_location.option, 
+    sum(answer_stat_location.count) AS count
+   FROM answer_stat_location
+  WHERE answer_stat_location.question = #{qid}
+  group by answer_stat_location.country,answer_stat_location.option 
+) lc left join country c on lc.country=c.code left join option o on lc.option=o.id
+order by lc.country
+		</select>
+		
+		<!-- OPTION HISTORY RESULT -->
+		<select id="answerStatHistory" resultType="AnswerStatHistory">
+	select distinct answerdate as date, option
+, sum(count) OVER (PARTITION BY option ORDER BY answerdate, option) as count
+, sum(count) OVER (PARTITION BY option ORDER BY answerdate, option) * 100 / sum(count) OVER (PARTITION BY question ORDER BY answerdate) as percent
+ from answer_stat where question = #{qid} 
+order by answerdate,option
+		</select>
+		
+		
+</mapper>

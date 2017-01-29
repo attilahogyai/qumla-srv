@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN' 'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+
+<mapper namespace="eu.dorsum.webtrader.services.permission.impl.PermissionMapper">
+	
+	<cache
+	  eviction="LRU"
+	  flushInterval="60000"
+	  size="512"
+	  readOnly="true"/>	
+	  
+	<select id="getUserPermissionGroups" resultType="PermissionGroup">
+		<![CDATA[
+		SELECT
+			pgd.id as id,
+      		pgd.code as code,
+      		pgd.description_${languageId} as description
+		FROM 
+			operator o
+			LEFT JOIN permission_group_operator pgo on pgo.operator_id = o.id
+			LEFT JOIN permission_group_dict pgd on pgd.id = pgo.group_id
+		WHERE 
+			o.opcode = #{authorizationInfo.user}
+		]]>
+	</select>
+	
+	<select id="getGroupPermissions" resultType="Permission">
+		<![CDATA[
+		SELECT
+			pd.id as id,
+      		pd.code as code,
+      		pd.description_2 as description
+		FROM 
+			permission_group_dict pgd
+			INNER JOIN permission_group pg on pg.group_id = pgd.id
+			INNER JOIN permission_dict pd on pd.id = pg.permission_id
+		WHERE 
+			pgd.code = #{groupCode} or pgd.id = #{groupId}
+		]]>
+	</select>
+	
+	<select id="getPermissions" resultType="Permission">
+		SELECT
+			id,
+			code,
+			description_${languageId} as description
+		FROM
+			permission_dict
+		WHERE
+			<if test="id == null and code == null">
+	    		1 = 1 or
+	  		</if>
+			id = #{id} or code = #{code}
+	</select>
+	
+	<insert id="insertPermissionToDb" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		<![CDATA[
+		INSERT INTO permission_dict	(
+			code,
+			description_${languageId},
+			modify_dt,
+			modify_opcode
+		) VALUES (
+			#{code},
+			#{description},
+			getDate(),
+			#{authorizationInfo.user}
+		)
+		]]>
+	</insert>
+	
+	<insert id="deletePermissionFromDb">
+		<![CDATA[
+		DELETE FROM permission_dict
+		WHERE id = #{id} or code = #{code}
+		]]>
+	</insert>
+	
+	<update id="updatePermissionInDb">
+		<![CDATA[
+		UPDATE permission_dict
+		SET
+			code = #{code},
+			description_${languageId} = #{description},
+			modify_dt = getDate(),
+			modify_opcode = #{authorizationInfo.user}
+		WHERE
+			id = #{id} or code = #{code}
+		]]>
+	</update>
+	
+	<select id="getPermissionGroups" resultType="PermissionGroup">
+		SELECT
+			id,
+			code,
+			description_${languageId} as description
+		FROM
+			permission_group_dict
+		WHERE
+			<if test="id == null and code == null">
+	    		1 = 1 or
+	  		</if>
+			id = #{id} or code = #{code}
+	</select>
+	
+	<insert id="insertPermissionGroupToDb" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		<![CDATA[
+		INSERT INTO permission_group_dict	(
+			code,
+			description_${languageId},
+			modify_dt,
+			modify_opcode
+		) VALUES (
+			#{code},
+			#{description},
+			getDate(),
+			#{authorizationInfo.user}
+		)
+		]]>
+	</insert>
+	
+	<delete id="deletePermissionGroupFromDb">
+		<![CDATA[
+		DELETE FROM permission_group_dict
+		WHERE id = #{id} or code = #{code}
+		]]>
+	</delete>
+	
+	<update id="updatePermissionGroupInDb">
+		<![CDATA[
+		UPDATE permission_group_dict
+		SET
+			code = #{code},
+			description_${languageId} = #{description},
+			modify_dt = getDate(),
+			modify_opcode = #{authorizationInfo.user}
+		WHERE
+			id = #{id} or code = #{code}
+		]]>
+	</update>
+	
+	<insert id="insertPermissionToGroupInDb">
+		<![CDATA[
+		INSERT INTO permission_group (
+			permission_id,
+			group_id,
+			modify_dt,
+			modify_opcode
+		) VALUES (
+			#{permissionId},
+			#{groupId},
+			getDate(),
+			#{authorizationInfo.user}
+		)
+		]]>
+	</insert>
+</mapper>
